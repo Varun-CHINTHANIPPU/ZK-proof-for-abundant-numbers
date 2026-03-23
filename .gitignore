@@ -1,0 +1,5 @@
+node_modules/
+build/
+keys/
+*.zkey
+test_data/results/
