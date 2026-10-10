@@ -1,14 +1,16 @@
 # ZK Proof for Abundant Numbers
 
-This repository contains a research prototype for proving that an integer is abundant using zero-knowledge proofs.
+This repository is a research prototype for proving whether an integer is abundant using zero-knowledge proofs.
 
-The project uses Circom and Groth16 via snarkjs to encode arithmetic constraints, generate witness data, and verify proofs without exposing the underlying secret values.
+The project uses Circom and Groth16 through snarkjs to express arithmetic constraints, generate witnesses, and verify proofs while keeping the underlying number private.
 
-## What this project does
+## Overview
 
-The circuit checks a set of divisor and quotient witnesses against arithmetic constraints related to abundance. The goal is to demonstrate a privacy-preserving verification flow for a number-theoretic property, while keeping the logic exploratory and research-focused.
+An abundant number is a positive integer whose sum of proper divisors is greater than the number itself.
 
-## Repository structure
+This project explores how that property can be encoded as a zk-SNARK circuit and verified without revealing the secret value directly.
+
+## Project structure
 
 ```text
 .
@@ -33,8 +35,8 @@ The circuit checks a set of divisor and quotient witnesses against arithmetic co
 ├── pot.ptau
 ├── pot1.ptau
 ├── pot_final.ptau
-├── public.json
 ├── proof.json
+├── public.json
 └── README.md
 ```
 
@@ -43,9 +45,9 @@ The circuit checks a set of divisor and quotient witnesses against arithmetic co
 - Node.js 18+
 - npm
 - Circom 2.x
-- A Unix-like shell for the setup script
+- Bash-compatible shell
 
-## Install
+## Installation
 
 ```bash
 git clone https://github.com/Varun-CHINTHANIPPU/ZK-proof-for-abundant-numbers.git
@@ -53,27 +55,29 @@ cd ZK-proof-for-abundant-numbers
 npm ci
 ```
 
-## Setup and proof generation
-
-### Compile and prepare the trusted setup
+## Setup
 
 ```bash
 bash scripts/setup.sh
 ```
 
-### Run the integrated proof script
+This script compiles the Circom circuit, prepares the Powers of Tau files, generates the Groth16 proving key, and exports the verification key.
+
+## Run examples
+
+### Integrated circuit proof
 
 ```bash
 node scripts/generate_proof_all_layers.js
 ```
 
-### Run the standalone proof script
+### Standalone proof script
 
 ```bash
 node scripts/generate_proof.js
 ```
 
-### Run the benchmark
+### Benchmark
 
 ```bash
 node scripts/benchmark.js
@@ -81,11 +85,11 @@ node scripts/benchmark.js
 
 ## Notes
 
-- This repository is intended for experimentation and learning.
-- The circuit logic is not presented as production-ready cryptographic validation.
-- The implementation is best understood as a proof-of-concept for circuit design and zk-SNARK workflow development.
-- Final correctness depends on the soundness of the arithmetic constraints, trusted setup, and witness generation process.
+- This is an experimental research project.
+- The circuit logic is intended for learning and prototyping.
+- The implementation is not presented as production-ready cryptographic validation.
+- Correctness depends on the circuit design, witness generation, and trusted setup process.
 
-## Research context
+## Research intent
 
-The project explores how a number-theoretic property like abundance can be translated into finite-field arithmetic constraints, verified in a zk-SNARK, and used as a case study for privacy-preserving mathematical verification.
+The repository is meant to explore how a number-theoretic statement like abundance can be converted into finite-field arithmetic constraints and verified through a zk-SNARK workflow.
