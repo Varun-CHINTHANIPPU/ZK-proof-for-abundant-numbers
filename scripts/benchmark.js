@@ -1,49 +1,84 @@
-const { performance } = require("perf_hooks");
 const snarkjs = require("snarkjs");
 const fs = require("fs");
 
-async function test(n, divisors, quotients) {
+async function generateProof(n, divisors) {
+    const wasmPath = "./build/abundant_complete_system_js/abundant_complete_system.wasm";
+    const zkeyPath = "./abundant_complete_system.zkey";
+
+    const quotients = divisors.map((d) => n / d);
+    const sigma = divisors.reduce((a, b) => a + b, 0);
+
+    const MAX = 16;
+    const paddedDivisors = [...divisors];
+    while (paddedDivisors.length < MAX) {
+        paddedDivisors.push(divisors[divisors.length - 1]);
+    }
+
+    const paddedQuotients = [...quotients];
+    while (paddedQuotients.length < MAX) {
+        paddedQuotients.push(quotients[quotients.length - 1]);
+    }
+
     const input = {
         n: n.toString(),
-        divisors: divisors.map(String),
-        quotients: quotients.map(String)
+        divisors: paddedDivisors.map((d) => d.toString()),
+        quotients: paddedQuotients.map((q) => q.toString())
     };
 
-    const start = performance.now();
+    console.log("\n==================================================");
+    console.log(`n = ${n}`);
+    console.log(`σ(n) = ${sigma}`);
+    console.log("==================================================");
 
-    const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        input,
-        "build/divisor_completeness_js/divisor_completeness.wasm",
-        "divisor_completeness.zkey"
-    );
+    try {
+        const start = Date.now();
 
-    const end = performance.now();
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+            input,
+            wasmPath,
+            zkeyPath
+        );
 
-    const vKey = JSON.parse(fs.readFileSync("keys/verification_key.json"));
-    const verifyStart = performance.now();
+        const proveTime = (Date.now() - start) / 1000;
+        const vKey = JSON.parse(fs.readFileSync("./keys/verification_key.json"));
 
-    const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+        const verifyStart = Date.now();
+        const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+        const verifyTime = (Date.now() - verifyStart) / 1000;
 
-    const verifyEnd = performance.now();
+        const proofSize = Buffer.byteLength(JSON.stringify(proof)) / 1024;
 
-    return {
-        n,
-        time: (end - start).toFixed(2),
-        verify: (verifyEnd - verifyStart).toFixed(2),
-        valid: res
-    };
-}
+        console.log(`Proving time: ${proveTime.toFixed(3)}s`);
+        console.log(`Verify time: ${verifyTime.toFixed(3)}s`);
+        console.log(`Proof size: ${proofSize.toFixed(2)} KB`);
+        console.log(`Valid: ${res}`);
 
-async function run() {
-    const tests = [
-        { n: 12, d: [1,2,3,4,6,12], q: [12,6,4,3,2,1] },
-        { n: 18, d: [1,2,3,6,9,18], q: [18,9,6,3,2,1] }
-    ];
-
-    for (const t of tests) {
-        const res = await test(t.n, t.d, t.q);
-        console.log(res);
+        return { proveTime, verifyTime, proofSize, res };
+    } catch (err) {
+        console.error("Error:", err.message);
+        return null;
     }
 }
 
-run();
+if (require.main === module) {
+    (async () => {
+        const tests = [
+            { n: 12, d: [1, 2, 3, 4, 6, 12] },
+            { n: 20, d: [1, 2, 4, 5, 10, 20] },
+            { n: 24, d: [1, 2, 3, 4, 6, 8, 12, 24] },
+            { n: 30, d: [1, 2, 3, 5, 6, 10, 15, 30] },
+            { n: 40, d: [1, 2, 4, 5, 8, 10, 20, 40] },
+            { n: 48, d: [1, 2, 3, 4, 6, 8, 12, 16, 24, 48] },
+            { n: 60, d: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60] },
+            { n: 84, d: [1, 2, 3, 4, 6, 7, 12, 14, 21, 28, 42, 84] },
+            { n: 96, d: [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 96] },
+            { n: 120, d: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 40, 60, 120] }
+        ];
+
+        for (const t of tests) {
+            await generateProof(t.n, t.d);
+        }
+    })();
+}
+
+module.exports = { generateProof };
